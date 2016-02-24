@@ -125,7 +125,6 @@ public class LList1 implements EList
 	@Override
 	public void addEnd(int val) 
 	{
-		Node p = root;
 		Node pLast = new Node(val);
 
 		if(size()==0) 
@@ -133,7 +132,8 @@ public class LList1 implements EList
 			root = pLast;
 		}
 		else
-		{
+		{ 
+			Node p = root;
 			for (int i=1; i<size(); i++)
 			{
 				p = p.next;
@@ -345,61 +345,100 @@ public class LList1 implements EList
 		return maxIndex;
 	}
 
-	public void swap (int index1, int index2)
-	{
-		if (size()<0 )
-			throw new NegativeArraySizeException();
-
-		if (index1<0 || index2<0 || index1>size() || index1>size() || index1>index2)
-			throw new IllegalArgumentException();
-
-		if (index1==index2) return;
-
-		Node p = root;
-		Node tmp1=null, tmp2=null;
-		for (int i=0; i<=index2;i++)
-		{
-			if (i==index1) tmp1=p;
-			if (i==index2) tmp2=p;
-			p=p.next;
-		}
-		addPos(index1, tmp2.val);
-		addPos(index2+1, tmp1.val);
-		delPos (index1+1);
-		delPos (index2+1);
-	}
-
 	@Override
 	public void reverse()
 	{
-		if (size()>0 )
+		if (root==null || root.next==null) //если 0 или 1 эл-т
+			return;
+
+		Node p;
+		Node rootTmp;
+		Node last;	
+
+		if (root.next.next==null) //если 2 эл-та
 		{
-			for (int i=0; i<size()/2; i++) 
+			root.next.next=root;
+			root=root.next;
+			root.next.next=null;
+		}
+		else //если больше 2-х эл-тов
+		{
+			p = root;
+			while(p.next!=null) p=p.next;
+			rootTmp = p;
+			last = p; 
+
+			while (root.next!=rootTmp)
 			{
-				swap(i, size()-i-1);
-				/*int tmp= get(i);
-				set(i, get( size()-i-1 ));
-				set(size()-i-1, tmp);*/
+				p = root;
+				while(p.next.next!=rootTmp) 
+				{
+					p=p.next;
+				}
+				last.next = p.next;
+				last=last.next;
+				last.next=null;
+				p.next=rootTmp;
+				p = root;
 			}
+			last.next=root;
+			last=last.next;
+			last.next=null;
+			root=rootTmp;
 		}
 	}
 
 	@Override
 	public void reverseHalf() 
 	{
-		if (size()<0 )
+		if (size()<0)
 			throw new NegativeArraySizeException();
 
-		if (size()>0 )
-		{
-			int d = (size()%2==0) ? 0 : 1;
+		if (root == null || root.next == null) //если 0 или 1 эл-т
+			return;
 
-			for (int i=0; i<size()/2; i++) 
+		Node p=root;
+		Node root1=root;
+		Node last1=null;
+		Node middle=null;
+		Node root2=null;
+		Node last2=null;
+
+		if (root.next.next==null) //если 2 эл-та
+		{
+			root.next.next=root;
+			root=root.next;
+			root.next.next=null;
+		}
+		else //если больше 2-х эл-тов
+		{
+			p=root;
+			int d = (size()%2==0) ? 0 : 1;
+			for (int i=1; i<size()-1;i++)
 			{
-				swap (i,size()/2+d+i);
-				/*int tmp= get(i);
-				set(i, get( size()/2+d+i ));
-				set(size()/2+d+i, tmp);*/
+				if (i==size()/2) 
+				{
+					last1=p;
+					middle = d==1 ? p.next : null;
+					p =	d==1 ?	p.next : p;
+					root2=p.next;					
+				}
+				p=p.next;
+			}
+			last2 =	d==1 ?	p : p.next;
+
+			if (middle==null)
+			{
+				last2.next=root1;
+				last1.next=null;
+				root=root2;
+			}
+			else
+			{
+				last2.next=middle;
+				middle.next=root1;
+				last1.next=null;
+				root=root2;
 			}
 		}
 	}
@@ -407,18 +446,111 @@ public class LList1 implements EList
 	@Override
 	public void sort() 
 	{
-		for(int i=0; i<size(); i++)					
+		Node rootNew = null;
+		Node minRef= null;
+		Node pNew = rootNew;
+		Node p = root;
+		int min = 0;
+		int size = size();
+
+		for(int j=0; j<size; j++)
 		{
-			for(int j=0; j<size()-i-1; j++)
+			//---блок поиска минимального элемента---
+			minRef=root;
+			p = root;
+			min=minElem();
+			while (p.val!=min) p=p.next;
+			minRef=p;
+			//-----получаем ссылку на минимальный элемент---
+
+			//---блок перемещения минимального элемента в новый список---
+			if(minRef==root) // -если минимальный элемент в начале списка
 			{
-				if(get(j)>get(j+1))
+				if (rootNew==null) //если новый список пуст 
 				{
-					swap (j,j+1);
-					/*int tmp= get(j+1);
-					set(j+1, get(j));
-					set(j, tmp);*/
+					rootNew=root; 
+					root=root.next;
+					rootNew.next=null;
+				}
+				else //если новый список уже содержит элементы
+				{
+					pNew = rootNew;
+					while (pNew.next!=null) pNew=pNew.next;
+					pNew.next=root;
+					root=root.next;
+					pNew.next.next=null;
+				}
+			}
+			else  // -если минимальный элемент в середине списка
+			{
+				p=root;
+				while (p.next!=minRef) p=p.next;
+
+				if (rootNew==null) //если новый список пуст
+				{
+					rootNew=p.next; 
+					p.next=p.next.next;
+					rootNew.next=null;
+				}
+				else //если новый список уже содержит элементы
+				{
+					pNew = rootNew;
+					while (pNew.next!=null) pNew=pNew.next;
+					pNew.next=p.next;
+					p.next=p.next.next;
+					pNew.next.next=null;
 				}
 			}
 		}
+		root=rootNew;
+	}
+
+	public void sortTmp() //оптимизировать код sort
+	{
+		Node rootNew = null;
+		Node minRef= null;
+		Node pNew = rootNew;
+		Node p = root;
+		int min = 0;
+		int size = size();
+
+		for(int j=0; j<size; j++)
+		{
+			//---блок поиска минимального элемента---
+			minRef=root;
+			p = root;
+			min=minElem();
+			while (p.val!=min) p=p.next;
+			minRef=p;
+			//-----получаем ссылку на минимальный элемент---
+
+			//---блок перемещения минимального элемента в новый список---
+
+			if (rootNew==null)
+			{
+				if (minRef!=root) 
+				{
+					p=root;
+					while (p.next!=minRef) p=p.next;
+				}
+				rootNew=p.next; 
+				p.next=p.next.next;
+				rootNew.next=null;
+			}
+			else
+			{
+				if (minRef!=root) 
+				{
+					p=root;
+					while (p.next!=minRef) p=p.next;
+				}
+				pNew = rootNew;
+				while (pNew.next!=null) pNew=pNew.next;
+				pNew.next=p.next;
+				p.next=p.next.next;
+				pNew.next.next=null;
+			}
+		}
+		root=rootNew;
 	}
 }
